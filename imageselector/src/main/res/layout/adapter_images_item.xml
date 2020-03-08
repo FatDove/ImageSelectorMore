@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_margin="1dp">
+
+    <com.donkingliang.imageselector.view.SquareImageView
+        android:id="@+id/iv_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#010101"
+        android:scaleType="centerCrop" />
+
+    <com.donkingliang.imageselector.view.SquareImageView
+        android:id="@+id/iv_masking"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#111212" />
+
+    <ImageView
+        android:id="@+id/iv_select"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:paddingTop="8dp"
+        android:paddingRight="8dp"
+        android:paddingLeft="10dp"
+        android:paddingBottom="10dp"
+        android:src="@drawable/icon_image_un_select"/>
+
+    <ImageView
+        android:id="@+id/iv_gif"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|bottom"
+        android:padding="3dp"
+        android:src="@drawable/ic_gif"
+        android:visibility="gone"
+        />
+
+    <LinearLayout
+        android:layout_marginLeft="5dp"
+        android:layout_marginBottom="5dp"
+        android:id="@+id/video_ll"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_gravity="left|bottom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/iv_video"
+            android:layout_width="39dp"
+            android:layout_height="21dp"
+            android:padding="3dp"
+            android:scaleType="fitXY"
+            android:background="@drawable/icon_video"
+            />
+        <TextView
+            android:id="@+id/iv_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:text="00:00"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:layout_marginLeft="4dp"
+            />
+
+    </LinearLayout>
+
+</FrameLayout>
