@@ -3,6 +3,10 @@
 
 
 
+### 效果演示
+
+![91E45D1C1F64788C45DFAC8AE2A706EE](/Users/fanjialong/Desktop/91E45D1C1F64788C45DFAC8AE2A706EE.gif)
+
 ### 接入方式
 
 >  在 progect 的 gect build.gradle  
@@ -20,7 +24,7 @@
 
 ```css
   dependencies { 
-    implementation 'com.github.fan21024158:ImageSelectorMore:1.0.0'
+    implementation 'com.github.fan21024158:ImageSelectorMore:1.0.1'
   }
 ```
 

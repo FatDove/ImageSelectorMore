@@ -25,4 +25,15 @@
         android:text="多选"
         android:textColor="#ffffff"
         android:textSize="30dp" />
+
+    <Button
+        android:id="@+id/tag"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_margin="10dp"
+        android:background="#666666"
+        android:gravity="center"
+        android:text="标注"
+        android:textColor="#ffffff"
+        android:textSize="30dp" />
 </LinearLayout>
