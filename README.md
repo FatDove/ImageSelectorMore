@@ -5,7 +5,7 @@
 
 ### 效果演示
 
-![91E45D1C1F64788C45DFAC8AE2A706EE](/Users/fanjialong/Desktop/91E45D1C1F64788C45DFAC8AE2A706EE.gif)
+![8SGItU.gif](https://s2.ax1x.com/2020/03/09/8SGItU.gif)
 
 ### 接入方式
 
