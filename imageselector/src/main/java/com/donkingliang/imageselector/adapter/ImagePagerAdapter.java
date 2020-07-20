@@ -3,6 +3,8 @@ package com.donkingliang.imageselector.adapter;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.net.Uri;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -97,10 +99,11 @@ public class ImagePagerAdapter extends PagerAdapter {
 //        final PhotoView currentView = viewList.remove(0);
         final PhotoView currentView = new PhotoView(mContext);
         final Image image = mImgList.get(position);
+        Uri imageUri = image.getUri();
         container.addView(currentView);
         if (image.isGif()) {
             currentView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            Glide.with(mContext).load(new File(image.getPath()))
+            Glide.with(mContext).load(imageUri)
                     .apply(new RequestOptions().diskCacheStrategy(DiskCacheStrategy.NONE))
                     .into(currentView);
         } else {
@@ -110,10 +113,15 @@ public class ImagePagerAdapter extends PagerAdapter {
                 videoPlayer2 = inflate.findViewById(R.id.simple_player);
 //                String filePath="/storage/emulated/0/Download/CacheChatVideo/chiye9b5a42a6884268941bfc56ff90ace589.mp4/06007c710442ce5cc640163f323e9170.mp4";
 //                videoPlayer2.setUp(filePath, true, "");
-                videoPlayer2.setUp(image.getPath(), true, "");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    String videoFilePath = ImageUtil.uriToFileApiQ(mContext, image.getUri()).getPath();
+                    videoPlayer2.setUp(videoFilePath, true, "");
+                }else{
+                    videoPlayer2.setUp(image.getPath(), true, "");
+                }
                 //增加封面
                 ImageView imageView = new ImageView(mContext);
-                Glide.with(mContext).load(image.getPath()).into(imageView);
+                Glide.with(mContext).load(imageUri).into(imageView);
                 videoPlayer2.setThumbImageView(imageView);
                 //增加title
                 container.addView(inflate);//千万别忘记添加到container
@@ -121,7 +129,7 @@ public class ImagePagerAdapter extends PagerAdapter {
             } else {
                 Glide.with(mContext).asBitmap()
                         .apply(new RequestOptions().diskCacheStrategy(DiskCacheStrategy.NONE))
-                        .load(new File(image.getPath())).into(new SimpleTarget<Bitmap>() {
+                        .load(imageUri).into(new SimpleTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         int bw = resource.getWidth();

@@ -29,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -49,6 +50,7 @@ import com.donkingliang.imageselector.imaging.IMGEditActivity;
 import com.donkingliang.imageselector.model.ImageModel;
 import com.donkingliang.imageselector.utils.DateUtils;
 import com.donkingliang.imageselector.utils.ImageSelector;
+import com.donkingliang.imageselector.utils.ImageUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -129,7 +131,7 @@ public class ImageSelectorActivity extends AppCompatActivity {
      *
      */
     public static void openActivity(Activity activity, int requestCode,
-                                    boolean isSingle,boolean onlyImage, boolean isViewImage, boolean useCamera,
+                                    boolean onlyImage,boolean isSingle, boolean isViewImage, boolean useCamera,
                                     int maxSelectCount,boolean isTagging, ArrayList<String> selected) {
         Intent intent = new Intent(activity, ImageSelectorActivity.class);
         intent.putExtras(dataPackages(isSingle,onlyImage, isViewImage, useCamera, maxSelectCount,isTagging, selected));
@@ -248,6 +250,8 @@ public class ImageSelectorActivity extends AppCompatActivity {
         if (!isTagging){
             diy_lable.setVisibility(View.GONE);
             selectOriginalImage.setVisibility(View.GONE);
+            tvPreview.setVisibility(View.GONE);
+
         }
 
     }
@@ -339,13 +343,18 @@ public class ImageSelectorActivity extends AppCompatActivity {
         if (mAdapter.getSelectImages().size() > 0) {
             Image image = mAdapter.getSelectImages().get(0); //只允许标注一张
             String path = image.getPath();
-            File imgfile = new File(path);
-            Uri uri1 = Uri.fromFile(imgfile);
+//            File imgfile = new File(path);
+//            Uri uri1 = Uri.fromFile(imgfile);
 //            Toast.makeText(this, "我要标注:" + imgfile.length(), Toast.LENGTH_SHORT).show();
-            File mImageFile = new File(getCacheDir(), UUID.randomUUID().toString() + ".jpg");
+            File mImageFile=null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                 mImageFile = ImageUtil.uriToFileApiQ(this, image.getUri());
+            }else{
+                 mImageFile = new File(getCacheDir(), UUID.randomUUID().toString() + ".jpg");
+            }
             Intent intent = new Intent(this, IMGEditActivity.class);
-            intent.putExtra(IMGEditActivity.EXTRA_IMAGE_URI, uri1); // 选中图片的Url
-            intent.putExtra(IMGEditActivity.EXTRA_IMAGE_SAVE_PATH, mImageFile.getAbsolutePath()); // 本地保存地址
+            intent.putExtra(IMGEditActivity.EXTRA_IMAGE_URI, image.getUri()); // 选中图片的Url
+            intent.putExtra(IMGEditActivity.EXTRA_IMAGE_SAVE_PATH, mImageFile.getPath());// 本地保存地址
             startActivity(intent);
 
 //          startActivityForResult(intent, REQ_IMAGE_EDIT);
@@ -365,7 +374,6 @@ public class ImageSelectorActivity extends AppCompatActivity {
         } else {
             mLayoutManager = new GridLayoutManager(this, 5);
         }
-
         rvImage.setLayoutManager(mLayoutManager);
         mAdapter = new ImageAdapter(this, mMaxCount, isSingle, isViewImage);
         rvImage.setAdapter(mAdapter);
@@ -384,7 +392,6 @@ public class ImageSelectorActivity extends AppCompatActivity {
             public void OnItemClick(Image image, int position){
                 toPreviewActivity(mAdapter.getData(), position);
             }
-
             @Override
             public void OnCameraClick() {
                 checkPermissionAndCamera();
@@ -470,13 +477,18 @@ public class ImageSelectorActivity extends AppCompatActivity {
                 ArrayList<Image> selectImages = mAdapter.getSelectImages();
                 for (int i = 0; i <selectImages.size() ; i++) {
                     String path = selectImages.get(i).getPath();
+                    Uri uri = selectImages.get(i).getUri();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        path = ImageUtil.uriToFileApiQ(this, uri).getPath();
+                    }else{
+                    }
                     //效验文件后缀
                     int dotIndex = path.lastIndexOf(".");
                     String end = path.substring(dotIndex, path.length()).toLowerCase();
                     // 是视频格式 不显示【标注】；
-                     if(end.equals(".avi") || end.equals(".mov") || end.equals(".FLV") || end.equals(".3GP") || end.equals(".mp4") || end.equals(".rmvb") || end.equals(".rm")) {
-                         diy_lable.setEnabled(false);
-                     }
+                    if(end.equals(".avi") || end.equals(".mov") || end.equals(".FLV") || end.equals(".3GP") || end.equals(".mp4") || end.equals(".rmvb") || end.equals(".rm")) {
+                        diy_lable.setEnabled(false);
+                    }
                     File file = new File(path);
                     tolSize +=  file.length();
                 }
@@ -573,9 +585,16 @@ public class ImageSelectorActivity extends AppCompatActivity {
         ArrayList<Image> selectImages = mAdapter.getSelectImages();
         ArrayList<String> images = new ArrayList<>();
         for (Image image : selectImages) {
-            images.add(image.getPath());
+            File file = null;
+            // 适配 Android Q
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                file = ImageUtil.uriToFileApiQ(this, image.getUri());
+                images.add(file.getPath());
+            }else{
+                images.add(image.getPath());
+            }
         }
-        //点击确定，把选中的图片通过Intent传给上一个Activity。
+        //点击确定，把选中的图片通过Intent传给上一个Activity
         setResult(images, false,isFull);
         finish();
     }
@@ -624,13 +643,11 @@ public class ImageSelectorActivity extends AppCompatActivity {
                 setSelectImageCount(mAdapter.getSelectImages().size());
             }
         } else if (requestCode == CAMERA_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
                 sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(new File(mPhotoPath))));
                 ArrayList<String> images = new ArrayList<>();
                 images.add(mPhotoPath);
                 setResult(images, true,isFull);
                 finish();
-            }
         } else if (requestCode == REQ_IMAGE_EDIT) {
             //将新的保存
 
@@ -790,18 +807,17 @@ public class ImageSelectorActivity extends AppCompatActivity {
             File photoFile = null;
             try {
                 photoFile = createImageFile();
+                if (photoFile != null) {
+                    mPhotoPath = photoFile.getAbsolutePath();
+                    //通过FileProvider创建一个content类型的Uri
+                    Uri photoUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
+//                Uri photoUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
+                    captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                    captureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    startActivityForResult(captureIntent, CAMERA_REQUEST_CODE);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
-            }
-
-            if (photoFile != null) {
-                mPhotoPath = photoFile.getAbsolutePath();
-                //通过FileProvider创建一个content类型的Uri
-                Uri photoUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
-//                Uri photoUri = FileProvider.getUriForFile(this, getPackageName() + ".fileprovider", photoFile);
-                captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-                captureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                startActivityForResult(captureIntent, CAMERA_REQUEST_CODE);
             }
         }
     }

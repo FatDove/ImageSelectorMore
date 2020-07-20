@@ -266,7 +266,6 @@ public class IMGUtils {
             ans <<= 1;
             raw >>= 1;
         }
-
         if (ans != rawSampleSize) {
             ans <<= 1;
         }

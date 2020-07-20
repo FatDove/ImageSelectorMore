@@ -55,6 +55,7 @@ public class IMGEditActivity extends IMGEditBaseActivity {
         }
         IMGDecoder decoder = null;
         String path = uri.getPath();
+        String scheme = uri.getScheme();
         if (!TextUtils.isEmpty(path)) {
             switch (uri.getScheme()) {
                 case "asset":
@@ -62,6 +63,14 @@ public class IMGEditActivity extends IMGEditBaseActivity {
                     break;
                 case "file":
                     decoder = new IMGFileDecoder(uri);
+                    break;
+                case "content":
+                    try {
+                        Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(uri));
+                        return bitmap;
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
                     break;
             }
         }

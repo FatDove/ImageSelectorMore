@@ -1,15 +1,18 @@
 package com.donkingliang.imageselector.model;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Log;
 
 import com.donkingliang.imageselector.entry.Folder;
 import com.donkingliang.imageselector.entry.Image;
+import com.donkingliang.imageselector.utils.ImageUtil;
 import com.donkingliang.imageselector.utils.StringUtils;
 
 import java.io.File;
@@ -34,66 +37,49 @@ public class ImageModel {
             public void run() {
                 //扫描图片
                 ContentResolver mContentResolver = context.getContentResolver();
-//                Cursor  mCursor = mContentResolver.query(MediaStore.Files.getContentUri("external"),
-//                        null,
-//                        MediaStore.Files.FileColumns.MIME_TYPE + " =? ", new String[]
-////                                {"image/jpeg","image/png", "image/webp","video/mp4", "video/ogg","video/webm"}, null);
-//                                {"video/mp4"}, null);
-
-                //"image/jpeg", "image/png", "image/webp","application/octet-stream","video/mp4", "video/ogg","video/webm"
-
-//            Uri mImageUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-//            ContentResolver mContentResolver = context.getContentResolver();
-//            Cursor mCursor = mContentResolver.query(mImageUri, new String[]{
-//                            MediaStore.Images.Media.DATA,
-//                            MediaStore.Images.Media.DISPLAY_NAME,
-//                            MediaStore.Images.Media.DATE_ADDED,
-//                            MediaStore.Images.Media._ID,
-//                            MediaStore.Images.Media.MIME_TYPE},
-//                    null,
-//                    null,
-//                    MediaStore.Images.Media.DATE_ADDED);
                 ArrayList<Image> images = new ArrayList<>();
-                Cursor mCursorImage = mContentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null,
+                Cursor mCursorImage = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        null,
+                        null,
+                        null,
                         MediaStore.Images.Media.DEFAULT_SORT_ORDER);
 
                 //读取扫描到的图片
                 if (mCursorImage != null) {
-
-                    while (mCursorImage.moveToNext()) {
+                    while (mCursorImage.moveToNext()){
                         // 获取图片的路径
-                        String path = mCursorImage.getString(
-                                mCursorImage.getColumnIndex(MediaStore.Images.Media.DATA));
+                        int id = mCursorImage.getInt(mCursorImage.getColumnIndex(MediaStore.Images.Media._ID));
+                        Uri contentUri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                        String path = mCursorImage.getString(mCursorImage.getColumnIndex(MediaStore.Images.Media.DATA));
                         //获取图片名称
                         String name = mCursorImage.getString(
                                 mCursorImage.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME));
                         //获取图片时间
                         long time = mCursorImage.getLong(
                                 mCursorImage.getColumnIndex(MediaStore.Images.Media.DATE_ADDED));
-
                         //获取图片类型
                         String mimeType = mCursorImage.getString(
                                 mCursorImage.getColumnIndex(MediaStore.Images.Media.MIME_TYPE));
 
                         //过滤未下载完成或者不存在的文件
-                        if (!"downloading".equals(getExtensionName(path)) && checkImgExists(path)) {
-                            images.add(new Image(path, time, name, mimeType));
+                        if (!"downloading".equals(getExtensionName(path)) && checkImgExists(path)){
+                            images.add(new Image(contentUri,path, time, name, mimeType));
                         }
                     }
                     mCursorImage.close();
                 }
-
                 //只要图片 就不要去查视频了
                 if (!onlyImage){
                     Cursor mCursorVideo = mContentResolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, null, null, null,
                             MediaStore.Video.Media.DEFAULT_SORT_ORDER);
-
                     //读取扫描到的视频
                     if (mCursorVideo != null) {
                         while (mCursorVideo.moveToNext()) {
-                            // 获取图片的路径
-                            String path = mCursorVideo.getString(
-                                    mCursorVideo.getColumnIndex(MediaStore.Video.VideoColumns.DATA));
+                            // 获取图片的路径 (区分android Q 及 以下)
+                            int id = mCursorVideo.getInt(mCursorVideo.getColumnIndex(MediaStore.Video.Media._ID));
+                            Uri contentUri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id);
+                            String  path = mCursorVideo.getString(mCursorVideo.getColumnIndex(MediaStore.Video.VideoColumns.DATA));
+
                             //获取图片名称
                             String name = mCursorVideo.getString(
                                     mCursorVideo.getColumnIndex(MediaStore.Video.VideoColumns.DISPLAY_NAME));
@@ -107,15 +93,12 @@ public class ImageModel {
 
                             //过滤未下载完成或者不存在的文件
                             if (!"downloading".equals(getExtensionName(path)) && checkImgExists(path)) {
-                                images.add(new Image(path, time, name, mimeType));
+                                images.add(new Image(contentUri,path, time, name, mimeType));
                             }
                         }
                         mCursorVideo.close();
                     }
                 }
-
-
-
                 //实现Comparator进行排序  重写 comparator 按照时间排序
                 Collections.sort(images, new Comparator<Image>() {
                     @Override
@@ -134,7 +117,6 @@ public class ImageModel {
             }
         }).start();
     }
-
     /**
      * 检查图片是否存在。ContentResolver查询处理的数据有可能文件路径并不存在。
      *
@@ -144,7 +126,6 @@ public class ImageModel {
     private static boolean checkImgExists(String filePath) {
         return new File(filePath).exists();
     }
-
     /**
      * 把图片按文件夹拆分，第一个文件夹保存所有的图片
      *
