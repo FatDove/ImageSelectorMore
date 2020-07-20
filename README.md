@@ -24,7 +24,7 @@
 
 ```css
   dependencies { 
-    implementation 'com.github.fan21024158:ImageSelectorMore:1.0.1'
+     implementation 'com.github.fan21024158:ImageSelectorMore:1.1.0'
   }
 ```
 
